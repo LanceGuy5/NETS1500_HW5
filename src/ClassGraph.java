@@ -5,16 +5,34 @@ import java.util.Objects;
 
 public class ClassGraph {
 
+    private ClassNode root;
+
     public ClassGraph() {
-        // TODO WRITE
+        this.root = null;
     }
 
-    public ClassNode getRoot() {
-//        return new ClassNode("Nets 1500", "NETS1500"); // EXAMPLE
-        throw new UnsupportedOperationException("TODO WRITE");
+    public boolean hasContent() {
+        return root != null;
+    }
+
+    void setRoot(ClassNode root) {
+        this.root = root;
+    }
+
+    ClassNode getRoot() {
+        return root;
     }
 
     public int getHeight() {
+        // TODO ADD LOGIC
+        throw new UnsupportedOperationException("TODO WRITE");
+    }
+
+    public void clear() {
+        this.root = null;
+    }
+
+    public boolean containsVal(String code) {
         // TODO ADD LOGIC
         throw new UnsupportedOperationException("TODO WRITE");
     }

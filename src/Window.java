@@ -1,7 +1,7 @@
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.MultiGraph;
-import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-import org.graphstream.ui.spriteManager.Sprite;
+//import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
+//import org.graphstream.ui.spriteManager.Sprite;
 import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.view.Viewer;
 
@@ -12,11 +12,8 @@ import java.util.UUID;
 public class Window {
 
     enum mapOp {
-        CONTAINS_KEY,
-        CONTAINS_VALUE,
         GET,
         PUT,
-        REMOVE,
         CLEAR
     }
 
@@ -66,12 +63,12 @@ public class Window {
 
         // Makes input field for major code
         // Major codes found here: https://catalog.upenn.edu/courses/
-        JLabel majorCodeLabel = new JLabel("Major code (i.e. CIS): ");
+        JLabel majorCodeLabel = new JLabel("Get Major Tree (input ex. CIS): ");
         keyTextField = new JTextField();
         keyTextField.setColumns(5);
 
         // Search for a specific course here
-        JLabel codeSearchLabel = new JLabel("Course description (takes code): ");
+        JLabel codeSearchLabel = new JLabel("Get Course description (input ex. CIS1210): ");
         codeSearchTextField = new JTextField();
         codeSearchTextField.setColumns(5);
 
@@ -96,12 +93,23 @@ public class Window {
             hashOperation(mapOp.CLEAR, keyTextField.getText());
         });
 
+        // Search for classes
         controlPanel.add(majorCodeLabel);
         controlPanel.add(keyTextField);
-        controlPanel.add(codeSearchTextField);
-
         controlPanel.add(searchButton);
+
+        // Gap
+        controlPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // Search for class description
+        controlPanel.add(codeSearchLabel);
+        controlPanel.add(codeSearchTextField);
         controlPanel.add(searchCourseButton);
+
+        // Gap
+        controlPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // Clear graph
         controlPanel.add(clearBtn);
 
         graphView = new MultiGraph("Graph");
@@ -139,7 +147,7 @@ public class Window {
 
         // If the "parent" to the node we are adding is not null, draw an edge.
         if (parentNode != null) {
-            graphView.addEdge(UUID.randomUUID().toString(), parentNode, n);
+            graphView.addEdge(UUID.randomUUID().toString(), parentNode, n, true);
         }
 
         // For spacing purposes in the future
@@ -148,7 +156,8 @@ public class Window {
         // If there are some children to root
         if (!root.getChildren().isEmpty()) {
             // Mark for UI purposes
-            n.setAttribute("ui.class", "marked");
+            // TODO Add taken classes?
+//            n.setAttribute("ui.class", "marked");
 
             // For each child, count (spacing for later on)
             for (ClassNode child : root.getChildren()) {
@@ -197,32 +206,40 @@ public class Window {
 
         switch (op) {
             case PUT:
-//                map.put(code, value);
-//                keySet.add(code);
-//                repaint();
-                break;
-            case REMOVE:
-//                map.remove(code);
-//                keySet.remove(code);
-//                repaint();
+                // What to do if a put request is made
+                // This only occurs if we are putting original graph
+                if (graph.hasContent()) {
+                    // Error here -> already has content in the graph
+                }
+                graph = WebScraper.scrapeMajor(code);
+                repaint();
                 break;
             case CLEAR:
-//                map.clear();
-//                keySet.clear();
-//                repaint();
-                break;
-            case CONTAINS_KEY:
-//                boolean containsKey = map.containsKey(code);
-//                JOptionPane.showMessageDialog(mainFrame, code + (containsKey ? " exists " : " missing ") + "in the keys of the map");
-                break;
-            case CONTAINS_VALUE:
-//                boolean containsValue = map.containsValue(value);
-//                JOptionPane.showMessageDialog(mainFrame, value + (containsValue ? " exists " : " missing ") + "in the values of the map");
+                // Just clears graph
+                graph.clear();
+                repaint();
                 break;
             case GET:
-//                String v = map.get(code);
-//                repaint();
-//                JOptionPane.showMessageDialog(mainFrame, "Value for key " + code + " is " + v);
+                // What to do if a get request is made
+                // This only occurs if graph exists
+                if (!graph.hasContent()) {
+                    // Throw error -> no content in graph
+                    JOptionPane.showMessageDialog(
+                            mainFrame,
+                            "Empty graph -> find major requirement tree before you can search a code!"
+                    );
+                }
+                if (!graph.containsVal(code)) {
+                    // Throw error -> code not in graph
+                    JOptionPane.showMessageDialog(
+                            mainFrame, code + " does not appear in the major requirement tree!"
+                    );
+                }
+                // Scrape code
+                String v = WebScraper.scrapeClassInfo(code);
+                JOptionPane.showMessageDialog(
+                        mainFrame, v
+                );
                 break;
         }
     }
