@@ -24,8 +24,19 @@ public class ClassGraph {
     }
 
     public int getHeight() {
-        // TODO ADD LOGIC
-        throw new UnsupportedOperationException("TODO WRITE");
+        return heightHelper(root, 1);
+    }
+
+    private int heightHelper(ClassNode curr, int currHeight) {
+        if (curr.getChildren().isEmpty()) {
+            return currHeight;
+        } else {
+            int currMax = -1;
+            for (ClassNode node : curr.getChildren()) {
+                currMax = Math.max(currMax, heightHelper(node, currHeight + 1));
+            }
+            return currMax;
+        }
     }
 
     public void clear() {
@@ -33,8 +44,19 @@ public class ClassGraph {
     }
 
     public boolean containsVal(String code) {
-        // TODO ADD LOGIC
-        throw new UnsupportedOperationException("TODO WRITE");
+        return containsValHelper(root, code);
+    }
+
+    private boolean containsValHelper(ClassNode node, String code) {
+        if (node.getCode().equals(code)) {
+            return true;
+        }
+        for (ClassNode child : node.getChildren()) {
+            if (containsValHelper(child, code)) {
+                return true;
+            }
+        }
+        return false;
     }
 
 }

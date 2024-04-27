@@ -210,6 +210,10 @@ public class Window {
                 // This only occurs if we are putting original graph
                 if (graph.hasContent()) {
                     // Error here -> already has content in the graph
+                    JOptionPane.showMessageDialog(
+                            mainFrame,
+                            "Graph has content -> clear first."
+                    );
                 }
                 graph = WebScraper.scrapeMajor(code);
                 repaint();
