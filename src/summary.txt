@@ -24,7 +24,7 @@ and what credit requirements their specific major requires.
 Work Breakdown - 
 Lance - java.awt/webscraping/graph visualizing
 Luka - webscraping/graph algorithm
-Sachith - webscraping/prediction/graph algorithm
+Sachith - graph algorithm/writeup
 
 
 
