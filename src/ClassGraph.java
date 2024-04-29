@@ -63,9 +63,9 @@ public class ClassGraph {
 
 class ClassNode {
 
-    private final String name;
-    private final String code;
-    private final List<ClassNode> children;
+    private String name;
+    private String code;
+    private List<ClassNode> children;
 
     /**
      * Makes a new ClassNode object.
@@ -79,6 +79,13 @@ class ClassNode {
         this.children = new ArrayList<>(Arrays.asList(children));
     }
 
+    public void setName(String newName) {
+        this.name = newName;
+    }
+
+    public void setCode(String newCode) {
+        this.code = newCode;
+    }
     public String getName() {
         return name;
     }
