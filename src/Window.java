@@ -1,7 +1,9 @@
+import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.MultiGraph;
 //import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 //import org.graphstream.ui.spriteManager.Sprite;
+import org.graphstream.ui.layout.Layout;
 import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.view.Viewer;
 
@@ -21,6 +23,8 @@ public class Window {
     private static SpriteManager graphSpriteManger;
     private static JFrame mainFrame;
     private static int ySegment = 0;
+
+    private static int[] counters;
 
     private static ClassGraph graph;
 
@@ -82,7 +86,7 @@ public class Window {
         });
 
         JButton searchCourseButton = new JButton("Find Course Description");
-        searchButton.addActionListener(e -> {
+        searchCourseButton.addActionListener(e -> {
             // Define the mapOp.PUT operation
             hashOperation(mapOp.GET, codeSearchTextField.getText());
         });
@@ -116,6 +120,7 @@ public class Window {
         graphSpriteManger = new SpriteManager(graphView);
         Viewer viewer = new Viewer(graphView, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
         viewer.disableAutoLayout();
+//        viewer.enableAutoLayout();
         JPanel view = viewer.addDefaultView(false);
 
         repaint();
@@ -126,28 +131,41 @@ public class Window {
         mainFrame.setVisible(true);
     }
 
-    private static void recursiveDraw(int startX, int endX, int level, ClassNode root, Node parentNode) {
-        // Generate a universal ID for our new node
-        String id = UUID.randomUUID().toString();
+    private static void recursiveDraw(ClassNode root,
+                                      Node parentNode) {
+        if (root == null) {
+            return;
+        }
 
         // Initialize the new node in the visualizer
-        Node n = graphView.addNode(id);
+        Node n = null;
+        if (!root.equals(graph.getRoot())) {
+            counters[root.getThousand()] = counters[root.getThousand()] + 1;
+            n = graphView.addNode(root.getUUID());
 
-        // Set the x and y coordinate of our node
-        n.setAttribute("xy", (startX + endX) / 2, -level * ySegment);
+            // Set the x and y coordinate of our node
+//            n.setAttribute("xy", (startX + endX) / 2, -level * ySegment);
+            n.setAttribute("ui.style", "size: 15px;");
+            n.setAttribute("ui.style", "text-size: 15px;");
+            n.setAttribute("xy",
+                    (root.getThousand() / 9.0) * (Main.WIDTH_SIZE - 140),
+                    (counters[root.getThousand()])
+                            * (Main.HEIGHT_SIZE / (double)graph.getThousandCount(root.getThousand())));
 
-        // Set the label of n as the code of the newly added ClassNode
-        n.setAttribute("ui.label", root.getCode());
 
-        // Add sprite and generate (UI)
+            // Set the label of n as the code of the newly added ClassNode
+            n.setAttribute("ui.label", root.getCode());
+
+            // Add sprite and generate (UI)
 //        Sprite s = graphSpriteManger.addSprite(UUID.randomUUID().toString());
 //        s.attachToNode(id);
 //        s.setPosition(Units.PX, 24, 0, 0);
 //        s.setAttribute("ui.label", root.getCode());
 
-        // If the "parent" to the node we are adding is not null, draw an edge.
-        if (parentNode != null) {
-            graphView.addEdge(UUID.randomUUID().toString(), parentNode, n, true);
+            // If the "parent" to the node we are adding is not null, draw an edge.
+            if (parentNode != null) {
+                graphView.addEdge(UUID.randomUUID().toString(), parentNode, n, true);
+            }
         }
 
         // For spacing purposes in the future
@@ -166,38 +184,49 @@ public class Window {
                 }
             }
 
-            // Determine segment length for clean rendering
-            int xSegment = (endX - startX) / numOfChild;
-            int counter = 0;
-
             // Recursively draw the children
             for (ClassNode child : root.getChildren()) {
-                recursiveDraw(startX + counter * xSegment,
-                        startX + (counter + 1) * xSegment,
-                        level + 1,
-                        child,
-                        n);
-                counter++;
+                if (graphView.getNode(child.getUUID()) != null) {
+                    graphView.addEdge(UUID.randomUUID().toString(),
+                            n,
+                            graphView.getNode(child.getUUID()),
+                            true);
+                } else {
+                    recursiveDraw(
+                            child,
+                            n);
+                }
             }
         }
     }
 
     private static void repaint() {
+
+        counters = new int[10];
+
         // Clear view and set up for UI development
         graphView.clear();
         graphView.addAttribute("ui.stylesheet", styleSheet);
 
-        // Get height of graph for rendering purposes
-        int height = graph.getHeight();
-
-        // Determine y differential for rendering
-        ySegment = Main.HEIGHT_SIZE / (height + 1);
+//        // Get height of graph for rendering purposes
+//        int height = graph.getHeight();
+//
+//        // Determine y differential for rendering
+//        ySegment = Main.HEIGHT_SIZE / (height + 1);
 
         // Get root node
         ClassNode root = graph.getRoot();
 
         // Draw down from root node
-        recursiveDraw(0, Main.WIDTH_SIZE, 0, root, null);
+        recursiveDraw(root, null);
+
+//        for (Edge edge : graphView.getEachEdge()) {
+//            edge.setAttribute("layout.weight", 10000.0); // Adjust this value as needed
+//        }
+//
+//        for (Node n : graphView.getEachNode()) {
+//            n.setAttribute("layout.weight", 100.0); // Adjust this value as needed
+//        }
     }
 
     private static void hashOperation(mapOp op, String code) {

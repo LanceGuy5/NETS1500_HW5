@@ -1,9 +1,4 @@
-import java.io.IOException;
-import java.net.URL;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Locale;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -18,14 +13,11 @@ public class WebScraper {
         return null;
     }
 
-
     public static ClassGraph scrapeMajor(String majorCode) {
         majorCode = majorCode.toLowerCase();
-
         URLGetter webPage;
         String content = "";
         HashMap<String, String> majors = new HashMap<>();
-
         try {
             webPage = new URLGetter("https://catalog.upenn.edu/courses/");
             List<String> contents = webPage.getContents();
@@ -42,7 +34,9 @@ public class WebScraper {
             contents = webPage.getContents();
 
 
-            ClassNode root = new ClassNode("Major Requirements", null);
+            ClassNode root = new ClassNode("Major Requirements",
+                    "REQS",
+                    UUID.randomUUID().toString());
 
             ClassGraph fin = new ClassGraph();
             fin.setRoot(root);
@@ -52,7 +46,6 @@ public class WebScraper {
                     "..(([a-zA-Z]+[^<]{1,2})+)";
             Pattern classPat = Pattern.compile(classStr, Pattern.CASE_INSENSITIVE);
             ClassNode temp = null;
-
 
             String prereqStr = "(Prerequisite:.+)";
             Pattern prereqPat = Pattern.compile(prereqStr, Pattern.CASE_INSENSITIVE);
@@ -71,48 +64,51 @@ public class WebScraper {
                     String currName = classMatch.group(3);
                     ClassNode curr = getNode(classNodes, currCode);
                     if (curr != null) {
+                        if (curr.getThousand() > 5000) {
+                            continue;
+                        }
                         curr.setName(currName);
                     } else {
-                        curr = new ClassNode(currName, currCode);
+                        curr = new ClassNode(currName, currCode, UUID.randomUUID().toString());
+                        if (curr.getThousand() > 5000) {
+                            continue;
+                        }
                         root.addChild(curr);
                         classNodes.add(curr);
                     }
-
-
                     temp = curr;
                 }
                 if (prereqMatch.find()) {
                     String currText = prereqMatch.group();
                     Matcher prereqMatchTwo = prereqPatTwo.matcher(currText);
-
                     while (prereqMatchTwo.find()) {
                         String currCode = prereqMatchTwo.group(2);
-
                         ClassNode curr = getNode(classNodes, currCode);
                         if (curr == null) {
-                            curr = new ClassNode(currCode, currCode);
+                            curr = new ClassNode(currCode, currCode, UUID.randomUUID().toString());
+                            if (curr.getThousand() > 5000) {
+                                continue;
+                            }
                             root.addChild(curr);
                             classNodes.add(curr);
+                        } else {
+                            if (curr.getThousand() > 5000) {
+                                continue;
+                            }
+                            if (temp != null) {
+                                if (!Objects.equals(curr.getCode(), temp.getCode())) {
+                                    curr.addChild(temp);
+                                    root.removeChild(temp);
+                                }
+                            }
                         }
-                        curr.addChild(temp);
                     }
-
-
                 }
             }
-
-
             return fin;
-
-
         } catch (Exception e) {
             throw new IllegalArgumentException(e.toString());
         }
-
-
-
-
-
     }
 
     public static String scrapeClassInfo(String classCode) {
@@ -161,12 +157,7 @@ public class WebScraper {
             Pattern classPattern = Pattern.compile(classStr, Pattern.CASE_INSENSITIVE);
             Matcher classMatcher = classPattern.matcher(content);
             classMatcher.find();
-            System.out.println(classMatcher.group(6));
-
             return classMatcher.group(6);
-
-
-            
         } catch (Exception e) {
             throw new IllegalArgumentException(e.toString());
         }
