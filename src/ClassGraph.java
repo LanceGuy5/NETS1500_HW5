@@ -44,12 +44,20 @@ public class ClassGraph {
     }
 
     public boolean containsVal(String code) {
+        if (code.contains(" ")) {
+            String[] real = code.split(" ");
+            code = real[0] + real[1];
+        }
         return containsValHelper(root, code);
     }
 
     private boolean containsValHelper(ClassNode node, String code) {
-        if (node.getCode().equals(code)) {
-            return true;
+        if (!Objects.equals(node.getCode(), root.getCode())) {
+            String[] real = node.getCode().split("\u00A0");
+            String nCode = real[0] + real[1];
+            if (nCode.equals(code)) {
+                return true;
+            }
         }
         for (ClassNode child : node.getChildren()) {
             if (containsValHelper(child, code)) {

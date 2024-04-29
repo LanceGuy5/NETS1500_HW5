@@ -1,10 +1,7 @@
 import org.graphstream.graph.Edge;
 import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.MultiGraph;
-//import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
-//import org.graphstream.ui.spriteManager.Sprite;
 import org.graphstream.ui.graphicGraph.GraphicElement;
-import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.view.Viewer;
 
 import javax.swing.*;
@@ -22,7 +19,6 @@ public class Window {
     }
 
     private static MultiGraph graphView;
-    private static SpriteManager graphSpriteManger;
     private static JFrame mainFrame;
 
     private static int[] counters;
@@ -119,7 +115,6 @@ public class Window {
         controlPanel.add(clearBtn);
 
         graphView = new MultiGraph("Graph");
-        graphSpriteManger = new SpriteManager(graphView);
         Viewer viewer = new Viewer(graphView, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
         viewer.disableAutoLayout();
 
@@ -165,10 +160,10 @@ public class Window {
             counters[root.getThousand()] = counters[root.getThousand()] + 1;
             n = graphView.addNode(root.getUUID());
 
-            // Set the x and y coordinate of our node
-//            n.setAttribute("xy", (startX + endX) / 2, -level * ySegment);
+            // Some preemptive rendering rules
             n.setAttribute("ui.style", "size: 15px;");
             n.setAttribute("ui.style", "text-size: 15px;");
+            // Rendering algorithm
             n.setAttribute("xy",
                     (root.getThousand() / 9.0) * (Main.WIDTH_SIZE),
                     (counters[root.getThousand()])
@@ -178,33 +173,16 @@ public class Window {
             // Set the label of n as the code of the newly added ClassNode
             n.setAttribute("ui.label", root.getCode());
 
-            // Add sprite and generate (UI)
-//        Sprite s = graphSpriteManger.addSprite(UUID.randomUUID().toString());
-//        s.attachToNode(id);
-//        s.setPosition(Units.PX, 24, 0, 0);
-//        s.setAttribute("ui.label", root.getCode());
-
             // If the "parent" to the node we are adding is not null, draw an edge.
             if (parentNode != null) {
                 graphView.addEdge(UUID.randomUUID().toString(), parentNode, n, true);
             }
         }
 
-        // For spacing purposes in the future
-        int numOfChild = 0;
-
         // If there are some children to root
         if (!root.getChildren().isEmpty()) {
             // Mark for UI purposes
-            // TODO Add taken classes?
 //            n.setAttribute("ui.class", "marked");
-
-            // For each child, count (spacing for later on)
-            for (ClassNode child : root.getChildren()) {
-                if (child != null) {
-                    numOfChild++;
-                }
-            }
 
             // Recursively draw the children
             for (ClassNode child : root.getChildren()) {
@@ -230,25 +208,11 @@ public class Window {
         graphView.clear();
         graphView.addAttribute("ui.stylesheet", styleSheet);
 
-//        // Get height of graph for rendering purposes
-//        int height = graph.getHeight();
-//
-//        // Determine y differential for rendering
-//        ySegment = Main.HEIGHT_SIZE / (height + 1);
-
         // Get root node
         ClassNode root = graph.getRoot();
 
         // Draw down from root node
         recursiveDraw(root, null);
-
-//        for (Edge edge : graphView.getEachEdge()) {
-//            edge.setAttribute("layout.weight", 10000.0); // Adjust this value as needed
-//        }
-//
-//        for (Node n : graphView.getEachNode()) {
-//            n.setAttribute("layout.weight", 100.0); // Adjust this value as needed
-//        }
     }
 
     private static void hashOperation(mapOp op, String code) {
@@ -291,9 +255,16 @@ public class Window {
                             mainFrame,
                             "Empty graph -> find major requirement tree before you can search a code!"
                     );
+                    break;
                 }
                 // Scrape code
                 try {
+                    if (!graph.containsVal(code)) {
+                        JOptionPane.showMessageDialog(
+                                mainFrame, code + " does not appear in the major requirement tree!"
+                        );
+                        break;
+                    }
                     String v = WebScraper.scrapeClassInfo(code);
                     JOptionPane.showMessageDialog(
                             mainFrame, insertNewlines(v, 150)
@@ -328,7 +299,7 @@ public class Window {
             }
         }
 
-        return builder.toString();
+        return builder.toString().replaceAll("&quot;", "\"");
     }
 
 }

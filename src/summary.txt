@@ -1,8 +1,8 @@
-.Java AWT Visualizer to suggest UPenn Course Schedules
+Java AWT Visualizer to suggest UPenn Course Schedules
 
 For our final project, we have created a Java AWT visualizer program that is essentially a graphical iteration of creating a sample 
 suggested course schedule for a student at the University of Pennsylvania. To give it a simple name, we made an algorithm that suggests 
-future course schedulesfor UPenn students with a GUI. It leverages a directed acyclic graph (DAG) of classes and utilizes the prereqs 
+future course schedules for UPenn students with a GUI. It leverages a directed acyclic graph (DAG) of classes and utilizes the prereqs
 for a given major using web scraping and graph visualization. We also have a generic algorithm to dictate how classes will be suggested. 
 Utilizing the prerequisite information for a given course and past classes a student has taken, we offer a viable sample course schedule 
 for any student's future semester. 
