@@ -3,12 +3,14 @@ import org.graphstream.graph.Node;
 import org.graphstream.graph.implementations.MultiGraph;
 //import org.graphstream.ui.graphicGraph.stylesheet.StyleConstants.Units;
 //import org.graphstream.ui.spriteManager.Sprite;
-import org.graphstream.ui.layout.Layout;
+import org.graphstream.ui.graphicGraph.GraphicElement;
 import org.graphstream.ui.spriteManager.SpriteManager;
 import org.graphstream.ui.view.Viewer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.UUID;
 
 public class Window {
@@ -22,7 +24,6 @@ public class Window {
     private static MultiGraph graphView;
     private static SpriteManager graphSpriteManger;
     private static JFrame mainFrame;
-    private static int ySegment = 0;
 
     private static int[] counters;
 
@@ -64,6 +65,7 @@ public class Window {
         mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         mainFrame.setLayout(new BorderLayout());
         mainFrame.setSize(Main.WIDTH_SIZE, Main.HEIGHT_SIZE);
+        mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
         // Makes input field for major code
         // Major codes found here: https://catalog.upenn.edu/courses/
@@ -120,8 +122,28 @@ public class Window {
         graphSpriteManger = new SpriteManager(graphView);
         Viewer viewer = new Viewer(graphView, Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD);
         viewer.disableAutoLayout();
+
 //        viewer.enableAutoLayout();
         JPanel view = viewer.addDefaultView(false);
+
+        // Logic for clicking on node
+        viewer.getDefaultView().addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                GraphicElement node = viewer.getDefaultView().findNodeOrSpriteAt(e.getX(), e.getY());
+                if (node != null) {
+                    for (Node n : viewer.getGraphicGraph().getEachNode()) {
+                        n.setAttribute("ui.style", "fill-color: gray;");
+                    }
+                    node.setAttribute("ui.style", "fill-color: red;");
+                    for (Edge edge : viewer.getGraphicGraph().getEachEdge()) {
+                        if (edge.getNode0().equals(node)) {
+                            edge.getNode1().setAttribute("ui.style", "fill-color: blue;");
+                        }
+                    }
+                }
+            }
+        });
 
         repaint();
 
@@ -148,9 +170,9 @@ public class Window {
             n.setAttribute("ui.style", "size: 15px;");
             n.setAttribute("ui.style", "text-size: 15px;");
             n.setAttribute("xy",
-                    (root.getThousand() / 9.0) * (Main.WIDTH_SIZE - 140),
+                    (root.getThousand() / 9.0) * (Main.WIDTH_SIZE),
                     (counters[root.getThousand()])
-                            * (Main.HEIGHT_SIZE / (double)graph.getThousandCount(root.getThousand())));
+                            * (Main.HEIGHT_SIZE / (double)graph.getThousandCount(root.getThousand())) + 10);
 
 
             // Set the label of n as the code of the newly added ClassNode
@@ -243,9 +265,17 @@ public class Window {
                             mainFrame,
                             "Graph has content -> clear first."
                     );
+                    break;
                 }
-                graph = WebScraper.scrapeMajor(code);
-                repaint();
+                try {
+                    graph = WebScraper.scrapeMajor(code);
+                    repaint();
+                } catch (IllegalArgumentException e) {
+                    JOptionPane.showMessageDialog(
+                            mainFrame,
+                            code + " not a valid major code!"
+                    );
+                }
                 break;
             case CLEAR:
                 // Just clears graph
@@ -262,19 +292,43 @@ public class Window {
                             "Empty graph -> find major requirement tree before you can search a code!"
                     );
                 }
-                if (!graph.containsVal(code)) {
-                    // Throw error -> code not in graph
+                // Scrape code
+                try {
+                    String v = WebScraper.scrapeClassInfo(code);
+                    JOptionPane.showMessageDialog(
+                            mainFrame, insertNewlines(v, 150)
+                    );
+                } catch (IllegalArgumentException e) {
                     JOptionPane.showMessageDialog(
                             mainFrame, code + " does not appear in the major requirement tree!"
                     );
                 }
-                // Scrape code
-                String v = WebScraper.scrapeClassInfo(code);
-                JOptionPane.showMessageDialog(
-                        mainFrame, v
-                );
                 break;
         }
+    }
+
+    public static String insertNewlines(String input, int maxLineWidth) {
+        StringBuilder builder = new StringBuilder();
+        int currentIndex = 0;
+
+        while (currentIndex < input.length()) {
+            int endIndex = Math.min(currentIndex + maxLineWidth, input.length());
+            // Find the last space within the maximum width
+            int lastSpaceIndex = input.substring(currentIndex, endIndex).lastIndexOf(' ');
+            if (lastSpaceIndex != -1 && lastSpaceIndex != endIndex - 1) {
+                // If there's a space within the maximum width, break the line at that space
+                builder.append(input, currentIndex, currentIndex + lastSpaceIndex + 1);
+                builder.append("\n");
+                currentIndex += lastSpaceIndex + 1;
+            } else {
+                // If no space found within the maximum width, break the line at the maximum width
+                builder.append(input, currentIndex, endIndex);
+                builder.append("\n");
+                currentIndex = endIndex;
+            }
+        }
+
+        return builder.toString();
     }
 
 }
