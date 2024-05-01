@@ -5,7 +5,7 @@ suggested course schedule for a student at the University of Pennsylvania. To gi
 future course schedules for UPenn students with a GUI. It leverages a directed acyclic graph (DAG) of classes and utilizes the prereqs
 for a given major using web scraping and graph visualization. We also have a generic algorithm to dictate how classes will be suggested. 
 Utilizing the prerequisite information for a given course and past classes a student has taken, we offer a viable sample course schedule 
-for any student's future semester. 
+suggestion list for any student's future semester. 
 
 Categories Used:
 
@@ -15,11 +15,11 @@ and allows us to easily access which path/major a student is requesting to creat
 
 Document Search (aka Information Retrieval) - For retrieving class information we used common web scrapping techniques using regex structures 
 and iterating through the UPenn course website. By going through each major we are able to extract course pre-requisite information and match 
-it to credit/course requirements for each major. 
+it to credit/course requirements for each major and portray a viable path for what a student can take for their future years.
 
 Advanced topics related to the class - Recommendations - For our advanced topic, we make recommendations to students on what they should take 
 for their next semester schedule. We do this by looking at what courses a student has already taken, pre-requisite information of a given course, 
-and what credit requirements their specific major requires. 
+and what major specific requirements need to be fullfilled.  
 
 Work Breakdown - 
 Lance - java.awt/webscraping/graph visualizing
