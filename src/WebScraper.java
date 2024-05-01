@@ -24,7 +24,6 @@ public class WebScraper {
             for (String line: contents) {
                 content += line;
             }
-
             String urlPat = "(href=\")(/[a-z]+/" + majorCode + ")";
             Pattern url = Pattern.compile(urlPat);
             Matcher urlMatch = url.matcher(content);
@@ -32,8 +31,6 @@ public class WebScraper {
             String majorUrl = "https://catalog.upenn.edu" + urlMatch.group(2);
             webPage = new URLGetter(majorUrl);
             contents = webPage.getContents();
-
-
             ClassNode root = new ClassNode("Major Requirements",
                     "REQS",
                     UUID.randomUUID().toString());
@@ -64,16 +61,12 @@ public class WebScraper {
                     String currName = classMatch.group(3);
                     ClassNode curr = getNode(classNodes, currCode);
                     if (curr != null) {
-                        if (curr.getThousand() > 5000) {
-                            continue;
-                        }
                         curr.setName(currName);
                     } else {
                         curr = new ClassNode(currName, currCode, UUID.randomUUID().toString());
-                        if (curr.getThousand() > 5000) {
-                            continue;
-                        }
                         root.addChild(curr);
+                        root.setOutDegree(root.getOutDegree() + 1);
+                        curr.setInDegree(0);
                         classNodes.add(curr);
                     }
                     temp = curr;
@@ -86,19 +79,18 @@ public class WebScraper {
                         ClassNode curr = getNode(classNodes, currCode);
                         if (curr == null) {
                             curr = new ClassNode(currCode, currCode, UUID.randomUUID().toString());
-                            if (curr.getThousand() > 5000) {
-                                continue;
-                            }
                             root.addChild(curr);
+                            root.setOutDegree(root.getOutDegree() + 1);
+                            curr.setInDegree(curr.getInDegree() + 1);
                             classNodes.add(curr);
                         } else {
-                            if (curr.getThousand() > 5000) {
-                                continue;
-                            }
                             if (temp != null) {
                                 if (!Objects.equals(curr.getCode(), temp.getCode())) {
                                     curr.addChild(temp);
+                                    curr.setOutDegree(curr.getOutDegree() + 1);
+                                    temp.setInDegree(temp.getInDegree() + 1);
                                     root.removeChild(temp);
+                                    root.setOutDegree(root.getOutDegree() - 1);
                                 }
                             }
                         }

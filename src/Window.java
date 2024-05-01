@@ -15,7 +15,8 @@ public class Window {
     enum mapOp {
         GET,
         PUT,
-        CLEAR
+        CLEAR,
+        SEARCH
     }
 
     private static MultiGraph graphView;
@@ -63,14 +64,25 @@ public class Window {
         mainFrame.setSize(Main.WIDTH_SIZE, Main.HEIGHT_SIZE);
         mainFrame.setExtendedState(JFrame.MAXIMIZED_BOTH);
 
+        // Set selected button
+        JRadioButton setButton = new JRadioButton("Set Taken");
+        setButton.setSelected(false);
+
+        // Get recommended schedule button
+        JButton scheduleButton = new JButton("Recommend Schedule");
+        scheduleButton.addActionListener(e -> {
+            // Define the mapOp.PUT operation
+            hashOperation(mapOp.SEARCH, null);
+        });
+
         // Makes input field for major code
         // Major codes found here: https://catalog.upenn.edu/courses/
-        JLabel majorCodeLabel = new JLabel("Get Major Tree (input ex. CIS): ");
+        JLabel majorCodeLabel = new JLabel("Get Major Tree:");
         keyTextField = new JTextField();
         keyTextField.setColumns(5);
 
         // Search for a specific course here
-        JLabel codeSearchLabel = new JLabel("Get Course description (input ex. CIS1210): ");
+        JLabel codeSearchLabel = new JLabel("Get Course description:");
         codeSearchTextField = new JTextField();
         codeSearchTextField.setColumns(5);
 
@@ -96,6 +108,13 @@ public class Window {
         });
 
         // Search for classes
+        controlPanel.add(setButton);
+        controlPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
+        // Search for schedule
+        controlPanel.add(scheduleButton);
+        controlPanel.add(Box.createRigidArea(new Dimension(20, 0)));
+
         controlPanel.add(majorCodeLabel);
         controlPanel.add(keyTextField);
         controlPanel.add(searchButton);
@@ -126,14 +145,35 @@ public class Window {
             @Override
             public void mouseClicked(MouseEvent e) {
                 GraphicElement node = viewer.getDefaultView().findNodeOrSpriteAt(e.getX(), e.getY());
-                if (node != null) {
-                    for (Node n : viewer.getGraphicGraph().getEachNode()) {
-                        n.setAttribute("ui.style", "fill-color: gray;");
+                if (!setButton.isSelected()) {
+                    if (node != null) {
+                        for (Node n : viewer.getGraphicGraph().getEachNode()) {
+                            if (graph.getVal(n.getId()).isTaken()) {
+                                n.setAttribute("ui.style", "fill-color: green;");
+                            } else {
+                                n.setAttribute("ui.style", "fill-color: gray;");
+                            }
+                        }
+                        node.setAttribute("ui.style", "fill-color: red;");
+                        for (Edge edge : viewer.getGraphicGraph().getEachEdge()) {
+                            if (edge.getNode0().equals(node)) {
+                                edge.getNode1().setAttribute("ui.style", "fill-color: blue;");
+                            }
+                        }
                     }
-                    node.setAttribute("ui.style", "fill-color: red;");
-                    for (Edge edge : viewer.getGraphicGraph().getEachEdge()) {
-                        if (edge.getNode0().equals(node)) {
-                            edge.getNode1().setAttribute("ui.style", "fill-color: blue;");
+                } else {
+                    ClassNode n = graph.getVal(node.getId());
+                    if (n.isTaken()) {
+                        node.setAttribute("ui.style", "fill-color: gray;");
+                        n.setTaken(false);
+                        for (ClassNode neighbor : n.getChildren()) {
+                            neighbor.setInDegree(neighbor.getInDegree() + 1);
+                        }
+                    } else {
+                        node.setAttribute("ui.style", "fill-color: green;");
+                        n.setTaken(true);
+                        for (ClassNode neighbor : n.getChildren()) {
+                            neighbor.setInDegree(neighbor.getInDegree() - 1);
                         }
                     }
                 }
@@ -275,6 +315,19 @@ public class Window {
                     );
                 }
                 break;
+            case SEARCH:
+                if (!graph.hasContent()) {
+                    // Throw error -> no content in graph
+                    JOptionPane.showMessageDialog(
+                            mainFrame,
+                            "Empty graph -> find major requirement tree before you can search a code!"
+                    );
+                    break;
+                }
+                JOptionPane.showMessageDialog(
+                        mainFrame,
+                        insertNewlines(graph.recommendSchedule(), 150)
+                );
         }
     }
 

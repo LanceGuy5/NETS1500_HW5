@@ -67,6 +67,25 @@ public class ClassGraph {
         return false;
     }
 
+    public ClassNode getVal(String uuid) {
+        return getValHelper(root, uuid);
+    }
+
+    private ClassNode getValHelper(ClassNode node, String uuid) {
+        if (!Objects.equals(node.getCode(), root.getCode())) {
+            if (node.getUUID().equals(uuid)) {
+                return node;
+            }
+        }
+        for (ClassNode child : node.getChildren()) {
+            ClassNode n2 = getValHelper(child, uuid);
+            if (n2 != null) {
+                return n2;
+            }
+        }
+        return null;
+    }
+
     public int getThousandCount(int target) {
         ArrayList<String> found = new ArrayList<>();
         return thousandCountHelper(root, target, found);
@@ -90,6 +109,33 @@ public class ClassGraph {
         return sum;
     }
 
+    public String recommendSchedule() {
+        List<ClassNode> choices = new ArrayList<>();
+        Queue<ClassNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            ClassNode curr = queue.poll();
+            if (!curr.getCode().equals(root.getCode())) {
+                if (!curr.isTaken() && curr.getInDegree() == 0) {
+                    choices.add(curr);
+                }
+            }
+            queue.addAll(curr.getChildren());
+        }
+        choices.sort(Comparator.comparingInt(ClassNode::getOutDegree));
+        Collections.reverse(choices);
+        StringBuilder ret = new StringBuilder();
+        ret.append("Some classes you could take are: ");
+        for (int i = 0; i < Math.min(choices.size() - 2, 5); i++) {
+            ret.append(choices.get(i).getCode());
+            ret.append(", ");
+        }
+        ret.append("and ");
+        ret.append(choices.get(Math.min(choices.size() - 1, 6)).getCode());
+        ret.append(".");
+        return ret.toString();
+    }
+
 }
 
 class ClassNode {
@@ -98,6 +144,9 @@ class ClassNode {
     private String code;
     private List<ClassNode> children;
     private String UUID;
+    private boolean isTaken;
+    private int inDegree;
+    private int outDegree;
 
     /**
      * Makes a new ClassNode object.
@@ -110,6 +159,9 @@ class ClassNode {
         this.code = code;
         this.children = new ArrayList<>(Arrays.asList(children));
         this.UUID = UUID;
+        this.inDegree = 0;
+        this.outDegree = 0;
+        this.isTaken = false;
     }
 
     public void setName(String newName) {
@@ -141,6 +193,30 @@ class ClassNode {
 
     public String getUUID() {
         return UUID;
+    }
+
+    public boolean isTaken() {
+        return isTaken;
+    }
+
+    public void setTaken(boolean taken) {
+        isTaken = taken;
+    }
+
+    public int getInDegree() {
+        return inDegree;
+    }
+
+    public void setInDegree(int inDegree) {
+        this.inDegree = inDegree;
+    }
+
+    public int getOutDegree() {
+        return outDegree;
+    }
+
+    public void setOutDegree(int outDegree) {
+        this.outDegree = outDegree;
     }
 
     public int getThousand() {
